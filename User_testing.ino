@@ -11,6 +11,7 @@
 #define PIN        5 // 
 #define Button_PIN 0 // 
 #define BUZZER_PIN 7 // Speaker Pin Number (External)
+#define ButtonLED_PIN 1 //
 #define NUMPIXELS 12 // Popular NeoPixel ring size
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
@@ -51,6 +52,8 @@ int noteDurations1[] = {
 // interuptHandler allows code to intervene at anypart of the void loop when button is pressed
 void interuptHandler() { 
   buttonOn = !buttonOn;
+  if(buttonOn) {digitalWrite(ButtonLED_PIN, HIGH);}
+  else {digitalWrite(ButtonLED_PIN, LOW);}
 }
 
 void clearPixels(int currIndex){
@@ -64,6 +67,8 @@ void setup() {
   // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
   // Any other board, you can remove this part (but no harm leaving it):
   pinMode(Button_PIN, INPUT_PULLUP);
+  pinMode(ButtonLED_PIN, OUTPUT);
+  digitalWrite(ButtonLED_PIN, LOW);
 
 #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
   clock_prescale_set(clock_div_1);
@@ -96,17 +101,18 @@ void loop() {
       // Check if button is on or off 
       if (buttonOn){ 
         // if on, light next pixel
-        pixels.setPixelColor(i, pixels.Color(255-((255/12)*i), 0+((255/12)*i), 0));
+        pixels.setPixelColor(i, pixels.Color(255-((255/12)*i), 0+((214/12)*i), 0));
         pixels.show();   // Send the updated pixel colors to the hardware.
         delay(DELAYVAL); // Pause before next pass through loop
       } else {
         // if off, end for loop and go to the next one
-        clearPixels(i);
+        pixels.clear();
+        pixels.show();
         break;
       }
     }
   }
-    // if on, enter for loop 
+  // if on, enter for loop - Green
   if(buttonOn) {
     for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
         // check if button is on or off 
@@ -117,7 +123,8 @@ void loop() {
         pixels.show();   // Send the updated pixel colors to the hardware.
       } else {
           // if off, exit for loop
-        clearPixels(i);
+        pixels.clear();
+        pixels.show();
         break;
       }       
     }
@@ -137,6 +144,8 @@ void loop() {
     }
   }
     // wait 5 seconds before restarting cycle 
-    delay(1000);
+  pixels.clear();
+  pixels.show();
+  delay(5000);
 } 
 
