@@ -1,39 +1,45 @@
-// NeoPixel Ring simple sketch (c) 2013 Shae Erisson
-// Released under the GPLv3 license to match the rest of the
-// Adafruit NeoPixel library
+/*
+Neo Cai and Maria Cristofo
+Spring 2023 
+ENGS 21 Group 3 Roller Project 
+For the purposes of Prototype 3.0 user testing, this program creates a progress bar-like timer for neopixel LEDs 
+that wrap around a roller. It plays a short melody to indicate start and finish and has a button that turns it on and off.
+*/
 
+// Import libraries
 #include <Adafruit_NeoPixel.h>
 #include "pitches.h"
 #ifdef __AVR__
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 
-#define PIN        5 // 
-#define Button_PIN 0 // 
+// Iniitilizaing Pins
+#define PIN        5 // LED Pin number
+#define Button_PIN 0 // Button Pin number
 #define BUZZER_PIN 7 // Speaker Pin Number (External)
-#define ButtonLED_PIN 1 //
+#define ButtonLED_PIN 1 // Button LED Pin Number
 #define NUMPIXELS 12 // Popular NeoPixel ring size
 
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+// Initializing Objects and Variables
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800); // Initializes adafruit Neo Pixels
 
 #define DELAYVAL 5000 // Time (in milliseconds) to pause between pixels
 
-// Button initilization
-volatile bool buttonOn = false; //0 is "on" and 1 is "off"
+volatile bool buttonOn = false; // Button state is off first, 0 is "on" and 1 is "off" so a press is a "falling action"
 
-int melody0[] = {
+int melody0[] = { // Starting music theme (star trek)
   NOTE_D4, NOTE_G4, NOTE_C5, 
   NOTE_B4, NOTE_G4, NOTE_E4, NOTE_A4,
   NOTE_D5
 };
 
-int noteDurations0[] = {
+int noteDurations0[] = { // Note durations for theme
   8, 16, 4, 
   8, 16, 16, 16,
   2,
 };
 
-int melody1[] = {
+int melody1[] = { // Ending theme (jingle bells)
   // Notes goes here
   NOTE_E5, NOTE_E5, NOTE_E5,
   NOTE_E5, NOTE_E5, NOTE_E5,
@@ -41,47 +47,41 @@ int melody1[] = {
   NOTE_E5,
 };
  
-int noteDurations1[] = {
-  // Notes duration goes here
+int noteDurations1[] = { // Note durations for theme
   8, 8, 4,
   8, 8, 4,
   8, 8, 8, 8,
   2,
 };
 
-// interuptHandler allows code to intervene at anypart of the void loop when button is pressed
+// interuptHandler allows code to intervene at any part of the void loop when button is pressed
 void interuptHandler() { 
-  buttonOn = !buttonOn;
-  if(buttonOn) {digitalWrite(ButtonLED_PIN, HIGH);}
-  else {digitalWrite(ButtonLED_PIN, LOW);}
+  buttonOn = !buttonOn; // When pressed, button state flips
+  if(buttonOn) {digitalWrite(ButtonLED_PIN, HIGH);} // If button is TRUE (on) the light is on
+  else {digitalWrite(ButtonLED_PIN, LOW);} // Else, off
 }
 
-void clearPixels(int currIndex){
-  for (int i = 0; i < currIndex; i++){
-    pixels.setPixelColor(i, pixels.Color(0, 0, 0));
-    pixels.show(); 
-  }
-}
-
+// Set up 
 void setup() {
-  // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
-  // Any other board, you can remove this part (but no harm leaving it):
-  pinMode(Button_PIN, INPUT_PULLUP);
-  pinMode(ButtonLED_PIN, OUTPUT);
-  digitalWrite(ButtonLED_PIN, LOW);
+  pinMode(Button_PIN, INPUT_PULLUP); // Set up button with Pullup 
+  pinMode(ButtonLED_PIN, OUTPUT); // Set up button LED
+  digitalWrite(ButtonLED_PIN, LOW); // Set button LED as off by default
 
-#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000) // Trinket specific code we don't need 
   clock_prescale_set(clock_div_1);
 #endif
-  // END of Trinket-specific code.
 
-  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-  attachInterrupt(digitalPinToInterrupt(Button_PIN), interuptHandler, FALLING);
+  pixels.begin(); // Set up neopixel strips 
+  attachInterrupt(digitalPinToInterrupt(Button_PIN), interuptHandler, FALLING); // Set up interupt, (button pin, method name, button action that trigers it)
 }
 
+// Main Loop
 void loop() {
+
   // If button is on
   if (buttonOn){
+
+    // Play opening melody
     int size0 = sizeof(noteDurations0) / sizeof(int);
     for (int thisNote = 0; thisNote < size0; thisNote++) {
       // to calculate the note duration, take one second divided by the note type
@@ -96,12 +96,13 @@ void loop() {
         // stop the tone playing:
         noTone(BUZZER_PIN);
     }
-    // Lights up each LED every "DELAYVAL" 
+
+    // Light up LEDs (red to green)
     for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
       // Check if button is on or off 
       if (buttonOn){ 
-        // if on, light next pixel
-        pixels.setPixelColor(i, pixels.Color(255-((255/12)*i), 0+((214/12)*i), 0));
+        // if on, light next pixel (gradually gets more green)
+        pixels.setPixelColor(i, pixels.Color(255-((255/12)*i), 0+((190/12)*i), 0));
         pixels.show();   // Send the updated pixel colors to the hardware.
         delay(DELAYVAL); // Pause before next pass through loop
       } else {
@@ -112,8 +113,11 @@ void loop() {
       }
     }
   }
+
   // if on, enter for loop - Green
   if(buttonOn) {
+
+    // Light up all LEDs Green for completion
     for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
         // check if button is on or off 
       if(buttonOn) {
@@ -128,6 +132,8 @@ void loop() {
         break;
       }       
     }
+
+    // Play ending theme
     int size1 = sizeof(noteDurations1) / sizeof(int); 
     for (int thisNote = 0; thisNote < size1; thisNote++) {
     // to calculate the note duration, take one second divided by the note type
@@ -143,7 +149,7 @@ void loop() {
       noTone(BUZZER_PIN);
     }
   }
-    // wait 5 seconds before restarting cycle 
+  // wait 5 seconds before restarting cycle 
   pixels.clear();
   pixels.show();
   delay(5000);
