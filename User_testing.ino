@@ -15,13 +15,15 @@ that wrap around a roller. It plays a short melody to indicate start and finish 
 
 // Iniitilizaing Pins
 #define PIN        5 // LED Pin number
-#define Button_PIN 0 // Button Pin number
+#define Button_PIN 2 // Button Pin number
 #define BUZZER_PIN 7 // Speaker Pin Number (External)
 #define ButtonLED_PIN 1 // Button LED Pin Number
 #define NUMPIXELS 12 // Popular NeoPixel ring size
+#define Waker_PIN 0 // LED Waker
 
 // Initializing Objects and Variables
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800); // Initializes adafruit Neo Pixels
+Adafruit_NeoPixel pixelsWake(NUMPIXELS, Waker_PIN, NEO_GRB + NEO_KHZ800); // Initializes adafruit Neo Pixels
 
 #define DELAYVAL 5000 // Time (in milliseconds) to pause between pixels
 
@@ -61,6 +63,16 @@ void interuptHandler() {
   else {digitalWrite(ButtonLED_PIN, LOW);} // Else, off
 }
 
+void delayChecker(int time, bool state){ 
+  for(int i = 1; i <= time/1000; i++){
+    if(buttonOn==!state){
+      break;
+    } else { 
+      delay(1000);
+    }
+  }
+}
+
 // Set up 
 void setup() {
   pinMode(Button_PIN, INPUT_PULLUP); // Set up button with Pullup 
@@ -72,6 +84,7 @@ void setup() {
 #endif
 
   pixels.begin(); // Set up neopixel strips 
+  pixelsWake.begin();
   attachInterrupt(digitalPinToInterrupt(Button_PIN), interuptHandler, FALLING); // Set up interupt, (button pin, method name, button action that trigers it)
 }
 
@@ -80,7 +93,6 @@ void loop() {
 
   // If button is on
   if (buttonOn){
-
     // Play opening melody
     int size0 = sizeof(noteDurations0) / sizeof(int);
     for (int thisNote = 0; thisNote < size0; thisNote++) {
@@ -102,9 +114,11 @@ void loop() {
       // Check if button is on or off 
       if (buttonOn){ 
         // if on, light next pixel (gradually gets more green)
-        pixels.setPixelColor(i, pixels.Color(255-((255/12)*i), 0+((190/12)*i), 0));
+        pixels.setPixelColor(i, pixels.Color(255-((200/12)*i), 0+((200/12)*i), 0));
         pixels.show();   // Send the updated pixel colors to the hardware.
-        delay(DELAYVAL); // Pause before next pass through loop
+        pixelsWake.setPixelColor(i, pixels.Color(0, 0, 0));// turn off wake LED
+        pixelsWake.show();
+        delayChecker(DELAYVAL, true); // Pause before next pass through loop
       } else {
         // if off, end for loop and go to the next one
         pixels.clear();
@@ -121,6 +135,8 @@ void loop() {
     for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
         // check if button is on or off 
       if(buttonOn) {
+        pixelsWake.clear();// turn off wake LED
+        pixelsWake.show();
           // if on, lights everything red
         pixels.setPixelColor(i, pixels.Color(0, 255, 0));
 
@@ -149,6 +165,12 @@ void loop() {
       noTone(BUZZER_PIN);
     }
   }
+  
+  // Wake function, draws current from battery every 15 seconds to keep awake
+  for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+        pixelsWake.setPixelColor(i, pixels.Color(0, 0, 255));
+        pixelsWake.show();   // Send the updated pixel colors to the hardware. 
+  }    
   // wait 5 seconds before restarting cycle 
   pixels.clear();
   pixels.show();
