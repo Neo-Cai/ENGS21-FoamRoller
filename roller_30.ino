@@ -2,8 +2,7 @@
 Neo Cai and Maria Cristofo
 Spring 2023 
 ENGS 21 Group 3 Roller Project 
-For the purposes of Prototype 3.0 user testing, this program creates a progress bar-like timer for neopixel LEDs 
-that wrap around a roller. It plays a short melody to indicate start and finish and has a button that turns it on and off.
+For the final prototype, this incorprates all features, buzzer, button, accelerometer, and LEDs
 */
 
 // Import libraries
